@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../navigation/app_router.dart';
@@ -27,10 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future<void>.delayed(_splashDelay);
     if (!mounted) return;
 
-    final user = FirebaseAuth.instance.currentUser;
-    final route = user == null ? AppRouter.login : AppRouter.home;
-
-    Navigator.of(context).pushReplacementNamed(route);
+    Navigator.of(context).pushReplacementNamed(AppRouter.authGate);
   }
 
   @override
@@ -45,16 +41,34 @@ class _SplashScreenState extends State<SplashScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF0A132B),
-                  Color(0xFF070E21),
-                  Color(0xFF040916),
+                  Color(0xFF0A1022),
+                  Color(0xFF070C19),
+                  Color(0xFF040712),
                 ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: -20,
+            left: -40,
+            right: -40,
+            child: Container(
+              height: 360,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.16),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 3.2, sigmaY: 3.2),
+              filter: ImageFilter.blur(sigmaX: 2.8, sigmaY: 2.8),
               child: const SizedBox.shrink(),
             ),
           ),
@@ -62,11 +76,11 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Container(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  center: const Alignment(0.0, 0.25),
-                  radius: 1.2,
+                  center: const Alignment(0, -0.04),
+                  radius: 1.02,
                   colors: [
                     AppColors.background.withValues(alpha: 0.2),
-                    AppColors.background.withValues(alpha: 0.85),
+                    AppColors.background.withValues(alpha: 0.96),
                   ],
                 ),
               ),
@@ -74,28 +88,40 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 20),
               child: Column(
                 children: [
-                  const Spacer(flex: 5),
+                  const Spacer(flex: 7),
                   Container(
-                    width: 168,
-                    height: 168,
+                    width: 182,
+                    height: 182,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.card.withValues(alpha: 0.42),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.09),
-                        width: 1.2,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.brandBlue.withValues(alpha: 0.22),
+                          AppColors.secondary.withValues(alpha: 0.45),
+                        ],
                       ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        width: 1.1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.brandBlue.withValues(alpha: 0.22),
+                          blurRadius: 34,
+                          spreadRadius: 3,
+                        ),
+                      ],
                     ),
                     child: const Center(
                       child: RotatedBox(
                         quarterTurns: 1,
                         child: Icon(
                           Icons.fitness_center,
-                          size: 56,
-                          color: Color(0xFFAFC7FF),
+                          size: 58,
+                          color: AppColors.brandBlueLight,
                         ),
                       ),
                     ),
@@ -104,44 +130,45 @@ class _SplashScreenState extends State<SplashScreen> {
                   const Text(
                     'IRON_CORE',
                     style: TextStyle(
-                      fontSize: 66,
+                      fontSize: 58,
+                      height: 1,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.4,
+                      letterSpacing: 0.6,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 22),
                   const Text(
                     'Sculpt Your Best Self',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const Spacer(flex: 6),
+                  const Spacer(flex: 8),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(99),
                     child: LinearProgressIndicator(
-                      minHeight: 14,
-                      value: 0.72,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      minHeight: 12,
+                      value: 0.66,
+                      backgroundColor: Colors.white.withValues(alpha: 0.16),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.brandBlue,
+                        AppColors.primary,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   const Text(
                     'INITIALIZING PROTOCOL…',
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 15,
-                      letterSpacing: 3,
+                      fontSize: 14,
+                      letterSpacing: 3.2,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const Spacer(flex: 4),
+                  const Spacer(flex: 5),
                 ],
               ),
             ),
