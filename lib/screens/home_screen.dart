@@ -3,52 +3,50 @@ import 'package:flutter/material.dart';
 
 import '../navigation/app_router.dart';
 import '../utils/app_colors.dart';
+import '../screens/workout_screen.dart';
+import '../screens/profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = const [
+      WorkoutScreen(),
+      ProfileScreen(),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (!context.mounted) return;
-              Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.login, (_) => false);
-            },
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.brandBlue,
+        unselectedItemColor: AppColors.textMuted,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.fitness_center),
+            label: 'Workouts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.verified_user, color: AppColors.brandBlue, size: 64),
-            const SizedBox(height: 16),
-            Text(
-              'Welcome, ${user?.displayName?.isNotEmpty == true ? user!.displayName : 'Athlete'}',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user?.email ?? '',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
-            ),
-          ],
-        ),
       ),
     );
   }

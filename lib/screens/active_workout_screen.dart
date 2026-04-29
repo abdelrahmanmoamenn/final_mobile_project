@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_text_styles.dart';
 import '../widgets/widgets.dart';
 
 class ActiveWorkoutScreen extends StatelessWidget {
@@ -55,7 +56,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +196,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
             const Center(
               child: RestTimerCircle(remainingSeconds: 75, totalSeconds: 90),
             ),
@@ -208,7 +209,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                 _OutlineActionButton(label: 'Skip', onTap: () {}),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
             PrimaryButton(
               label: 'Next Exercise',
               onPressed: () {},
@@ -225,7 +226,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
           ],
         ),
       ),

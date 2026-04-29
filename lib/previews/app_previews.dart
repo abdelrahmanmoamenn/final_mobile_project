@@ -3,7 +3,7 @@ import '../screens/home_screen.dart';
 import '../screens/workout_screen.dart';
 import '../screens/active_workout_screen.dart';
 import '../screens/profile_screen.dart';
-import '../utils/app_colors.dart';
+import '../utils/app_theme.dart';
 
 class HomePreview extends StatelessWidget {
   const HomePreview({super.key});

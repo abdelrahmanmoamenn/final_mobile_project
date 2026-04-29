@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../navigation/app_router.dart';
 import '../utils/app_colors.dart';
 import '../widgets/widgets.dart';
 
@@ -13,6 +15,7 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // User Header
             const SizedBox(height: 10),
@@ -156,7 +159,11 @@ class ProfileScreen extends StatelessWidget {
             PrimaryButton(
               label: 'Log Out',
               leadingIcon: Icons.logout,
-              onPressed: () {},
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (!context.mounted) return;
+                Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.login, (_) => false);
+              },
               backgroundColor: AppColors.danger.withValues(alpha: 0.1),
               foregroundColor: AppColors.danger,
               isOutlined: true,
@@ -188,16 +195,19 @@ class _PRTile extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.textSecondary, size: 18),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Lexend',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           Text(
             value,
             style: const TextStyle(
@@ -206,6 +216,7 @@ class _PRTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -239,8 +250,10 @@ class _SettingsRow extends StatelessWidget {
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 12),
         AppToggle(value: value, onChanged: (v) {}),
       ],
     );

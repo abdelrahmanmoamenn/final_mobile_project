@@ -16,4 +16,8 @@ class AppColors {
   static const Color textPrimary = Color(0xFFF2F5FF);
   static const Color textSecondary = Color(0xFFBDC4D6);
   static const Color textMuted = Color(0xFF8992A6);
+
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color danger = Color(0xFFFF3B30);
+  static const Color cardBorder = Color(0xFF3A4A60);
 }
