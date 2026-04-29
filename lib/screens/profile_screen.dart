@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../navigation/app_router.dart';
 import '../utils/app_colors.dart';
 import '../widgets/widgets.dart';
 
@@ -156,7 +158,15 @@ class ProfileScreen extends StatelessWidget {
             PrimaryButton(
               label: 'Log Out',
               leadingIcon: Icons.logout,
-              onPressed: () {},
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    AppRouter.authGate,
+                    (route) => false,
+                  );
+                }
+              },
               backgroundColor: AppColors.danger.withValues(alpha: 0.1),
               foregroundColor: AppColors.danger,
               isOutlined: true,

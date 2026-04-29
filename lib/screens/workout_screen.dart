@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../widgets/widgets.dart';
+import '../navigation/app_router.dart';
 
 class WorkoutScreen extends StatelessWidget {
   const WorkoutScreen({super.key});
@@ -194,7 +195,7 @@ class WorkoutScreen extends StatelessWidget {
           label: 'Start Workout',
           leadingIcon: Icons.bolt,
           onPressed: () {
-            // Navigate to active workout
+            Navigator.pushNamed(context, AppRouter.activeWorkout);
           },
         ),
       ),

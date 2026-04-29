@@ -60,7 +60,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -69,7 +69,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                     'Barbell Back Squat',
                     style: TextStyle(
                       fontFamily: 'Lexend',
-                      fontSize: 36,
+                      fontSize: 30,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
