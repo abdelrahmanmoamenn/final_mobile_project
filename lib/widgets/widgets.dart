@@ -39,7 +39,7 @@ class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: const Text(
-        'COACHAI',
+        'FORM',
         style: TextStyle(
           fontFamily: 'Lexend',
           fontSize: 18,
@@ -391,7 +391,7 @@ class CounterInput extends StatelessWidget {
                 formatter(value),
                 style: const TextStyle(
                   fontFamily: 'Lexend',
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),

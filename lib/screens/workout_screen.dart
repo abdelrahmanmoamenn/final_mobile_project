@@ -3,6 +3,7 @@ import '../navigation/app_router.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/widgets.dart';
+import '../navigation/app_router.dart';
 
 class WorkoutScreen extends StatelessWidget {
   const WorkoutScreen({super.key});

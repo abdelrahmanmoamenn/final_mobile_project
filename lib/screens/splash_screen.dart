@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const SizedBox(height: 34),
                   const Text(
-                    'IRON_CORE',
+                    'Form',
                     style: TextStyle(
                       fontSize: 58,
                       height: 1,
@@ -139,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const SizedBox(height: 22),
                   const Text(
-                    'Sculpt Your Best Self',
+                    'Achieve Your True Form',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,

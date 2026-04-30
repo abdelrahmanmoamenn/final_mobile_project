@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../navigation/app_router.dart';
@@ -161,10 +162,14 @@ class ProfileScreen extends StatelessWidget {
               leadingIcon: Icons.logout,
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
-                if (!context.mounted) return;
-                Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.login, (_) => false);
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    AppRouter.authGate,
+                    (route) => false,
+                  );
+                }
               },
-              backgroundColor: AppColors.danger.withValues(alpha: 0.1),
+              backgroundColor: AppColors.danger.withValues(alpha: 1),
               foregroundColor: AppColors.danger,
               isOutlined: true,
             ),

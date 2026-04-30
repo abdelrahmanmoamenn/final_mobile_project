@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'home_screen.dart';
+import '../main.dart';
 import 'login_screen.dart';
 
 class AuthGateScreen extends StatefulWidget {
@@ -39,7 +39,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     }
 
     final startedAt = DateTime.now();
-    while (_user == null && DateTime.now().difference(startedAt) < _maxRestoreWait) {
+    while (_user == null &&
+        DateTime.now().difference(startedAt) < _maxRestoreWait) {
       await Future<void>.delayed(_pollInterval);
       _user = auth.currentUser;
     }
@@ -69,7 +70,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     }
 
     if (_user != null) {
-      return const HomeScreen();
+      return const MainShell();
     }
 
     return const LoginScreen();
