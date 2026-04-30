@@ -1,11 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../model/user_model.dart';
 import '../navigation/app_router.dart';
+import '../services/database_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/widgets.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _databaseService = DatabaseService();
+  final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+  late Future<List<PersonalRecord>> _personalRecordsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _personalRecordsFuture = _databaseService.getPersonalRecords(_userId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +64,9 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Alex Mercer',
-              style: TextStyle(
+            Text(
+              FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+              style: const TextStyle(
                 fontFamily: 'Lexend',
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -114,16 +131,55 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.emoji_events_outlined,
                   ),
                   const SizedBox(height: 16),
-                  _PRTile(
-                    label: 'Deadlift',
-                    value: '405 lbs',
-                    icon: Icons.fitness_center,
-                  ),
-                  const SizedBox(height: 12),
-                  _PRTile(
-                    label: '5k Run',
-                    value: '22:45',
-                    icon: Icons.directions_run,
+                  FutureBuilder<List<PersonalRecord>>(
+                    future: _personalRecordsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      }
+
+                      final records = snapshot.data ?? [];
+                      
+                      if (records.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'No records yet. Start logging your workouts!',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          ...records.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final record = entry.value;
+                            return Column(
+                              children: [
+                                _PRTile(
+                                  label: record.exerciseName,
+                                  value: record.value,
+                                  icon: Icons.fitness_center,
+                                ),
+                                if (index < records.length - 1)
+                                  const SizedBox(height: 12),
+                              ],
+                            );
+                          }),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

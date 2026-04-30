@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../model/user_model.dart';
 import '../screens/home_screen.dart';
 import '../screens/workout_screen.dart';
 import '../screens/active_workout_screen.dart';
@@ -27,7 +28,7 @@ class ActiveWorkoutPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: AppTheme.darkTheme,
-      home: const ActiveWorkoutScreen(),
+      home: ActiveWorkoutScreen(workoutPlan: SampleData.legsWorkout),
     );
   }
 }

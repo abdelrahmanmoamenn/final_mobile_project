@@ -1,13 +1,155 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../model/user_model.dart';
+import '../services/database_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/widgets.dart';
 
-class ActiveWorkoutScreen extends StatelessWidget {
-  const ActiveWorkoutScreen({super.key});
+class ActiveWorkoutScreen extends StatefulWidget {
+  final WorkoutPlan workoutPlan;
+
+  const ActiveWorkoutScreen({super.key, required this.workoutPlan});
+
+  @override
+  State<ActiveWorkoutScreen> createState() => _ActiveWorkoutScreenState();
+}
+
+class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
+  late int _currentExerciseIndex;
+  late double _currentWeight;
+  late int _currentReps;
+  late int _currentSetNumber;
+  String _previousWeight = '0';
+  String _previousReps = '0';
+  final _databaseService = DatabaseService();
+  final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+
+  @override
+  void initState() {
+    super.initState();
+    _currentExerciseIndex = 0;
+    _currentSetNumber = 1;
+    _currentWeight = 185.0;
+    _currentReps = 8;
+    _loadPreviousSet();
+  }
+
+  void _loadPreviousSet() async {
+    if (_currentExerciseIndex >= widget.workoutPlan.exercises.length) return;
+
+    final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
+    final lastSet = await _databaseService.getLastLoggedSet(
+      userId: _userId,
+      exerciseId: exercise.id,
+    );
+
+    if (mounted) {
+      setState(() {
+        if (lastSet != null) {
+          _previousWeight = '${(lastSet['weight'] as double).toInt()} lbs';
+          _previousReps = '${lastSet['reps']} reps';
+          _currentWeight = lastSet['weight'] as double;
+          _currentReps = lastSet['reps'] as int;
+        } else {
+          _previousWeight = 'No data';
+          _previousReps = 'No data';
+          _currentWeight = 185.0;
+          _currentReps = 8;
+        }
+      });
+    }
+  }
+
+  void _logSet() async {
+    if (_currentExerciseIndex >= widget.workoutPlan.exercises.length) return;
+
+    final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
+
+    try {
+      // Save to database
+      await _databaseService.insertLoggedSet(
+        userId: _userId,
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        setNumber: _currentSetNumber,
+        weight: _currentWeight,
+        reps: _currentReps,
+      );
+
+      // Update personal record if this is a new max
+      await _databaseService.updatePersonalRecord(
+        userId: _userId,
+        exerciseName: exercise.name,
+        weight: _currentWeight,
+        reps: _currentReps,
+      );
+
+      // Show confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Set logged: ${_currentWeight.toInt()} lbs × $_currentReps reps'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Move to next set or exercise
+      if (_currentSetNumber < exercise.sets) {
+        if (mounted) {
+          setState(() {
+            _currentSetNumber++;
+          });
+        }
+      } else if (_currentExerciseIndex < widget.workoutPlan.exercises.length - 1) {
+        if (mounted) {
+          setState(() {
+            _currentExerciseIndex++;
+            _currentSetNumber = 1;
+          });
+        }
+        _loadPreviousSet();
+      } else {
+        // Workout complete
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Workout Complete!'),
+              content: const Text('Great job! Your workout has been saved.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging set: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentExerciseIndex >= widget.workoutPlan.exercises.length) {
+      return const Scaffold(
+        body: Center(child: Text('Workout Complete!')),
+      );
+    }
+
+    final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -22,9 +164,9 @@ class ActiveWorkoutScreen extends StatelessWidget {
         ),
         title: Column(
           children: [
-            const Text(
-              'LEG DAY',
-              style: TextStyle(
+            Text(
+              widget.workoutPlan.name.toUpperCase(),
+              style: const TextStyle(
                 fontFamily: 'Lexend',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -33,7 +175,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
               ),
             ),
             Text(
-              '45:12 Elapsed',
+              'Exercise ${_currentExerciseIndex + 1} of ${widget.workoutPlan.exercises.length}',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -42,7 +184,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () => Navigator.pop(context),
             child: const Text(
               'End',
               style: TextStyle(
@@ -65,10 +207,10 @@ class ActiveWorkoutScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Barbell Back Squat',
-                    style: TextStyle(
+                    exercise.name,
+                    style: const TextStyle(
                       fontFamily: 'Lexend',
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
@@ -86,13 +228,11 @@ class ActiveWorkoutScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
-                MuscleTag(label: 'Quads', isActive: true),
-                SizedBox(width: 8),
-                MuscleTag(label: 'Glutes'),
-                SizedBox(width: 8),
-                MuscleTag(label: 'Core'),
+                MuscleTag(label: exercise.muscleGroup, isActive: true),
+                const SizedBox(width: 8),
+                Text('• Rest: ${exercise.restSeconds}s', style: AppTextStyles.label),
               ],
             ),
             const SizedBox(height: 32),
@@ -109,18 +249,18 @@ class ActiveWorkoutScreen extends StatelessWidget {
                           const Text('CURRENT SET', style: AppTextStyles.label),
                           const SizedBox(height: 4),
                           RichText(
-                            text: const TextSpan(
-                              style: TextStyle(
+                            text: TextSpan(
+                              style: const TextStyle(
                                 fontFamily: 'Lexend',
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
                               children: [
-                                TextSpan(text: 'Set 3 '),
+                                TextSpan(text: 'Set $_currentSetNumber '),
                                 TextSpan(
-                                  text: 'of 5',
-                                  style: TextStyle(
+                                  text: 'of ${exercise.sets}',
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -131,14 +271,14 @@ class ActiveWorkoutScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('PREVIOUS', style: AppTextStyles.label),
-                          SizedBox(height: 4),
+                          const Text('PREVIOUS', style: AppTextStyles.label),
+                          const SizedBox(height: 4),
                           Text(
-                            '225 lbs × 8',
-                            style: TextStyle(
+                            '$_previousWeight × $_previousReps',
+                            style: const TextStyle(
                               fontFamily: 'Lexend',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -155,9 +295,15 @@ class ActiveWorkoutScreen extends StatelessWidget {
                       Expanded(
                         child: CounterInput(
                           label: 'Weight (lbs)',
-                          value: 230,
-                          onDecrement: () {},
-                          onIncrement: () {},
+                          value: _currentWeight,
+                          onDecrement: () {
+                            setState(() {
+                              if (_currentWeight > 0) _currentWeight -= 5;
+                            });
+                          },
+                          onIncrement: () {
+                            setState(() => _currentWeight += 5);
+                          },
                           formatter: (v) => v.toInt().toString(),
                         ),
                       ),
@@ -165,9 +311,15 @@ class ActiveWorkoutScreen extends StatelessWidget {
                       Expanded(
                         child: CounterInput(
                           label: 'Reps',
-                          value: 6,
-                          onDecrement: () {},
-                          onIncrement: () {},
+                          value: _currentReps.toDouble(),
+                          onDecrement: () {
+                            setState(() {
+                              if (_currentReps > 0) _currentReps--;
+                            });
+                          },
+                          onIncrement: () {
+                            setState(() => _currentReps++);
+                          },
                           formatter: (v) => v.toInt().toString(),
                         ),
                       ),
@@ -177,10 +329,10 @@ class ActiveWorkoutScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: _logSet,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.tertiary,
-                        foregroundColor: AppColors.textPrimary,
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: const Row(
@@ -206,13 +358,53 @@ class ActiveWorkoutScreen extends StatelessWidget {
               children: [
                 _OutlineActionButton(label: '+30s', onTap: () {}),
                 const SizedBox(width: 16),
-                _OutlineActionButton(label: 'Skip', onTap: () {}),
+                _OutlineActionButton(label: 'Skip', onTap: () {
+                  // Move to next exercise
+                  if (_currentExerciseIndex < widget.workoutPlan.exercises.length - 1) {
+                    setState(() {
+                      _currentExerciseIndex++;
+                      _currentSetNumber = 1;
+                    });
+                    _loadPreviousSet();
+                  }
+                }),
               ],
             ),
             const SizedBox(height: 24),
             PrimaryButton(
-              label: 'Next Exercise',
-              onPressed: () {},
+              label: _currentExerciseIndex < widget.workoutPlan.exercises.length - 1
+                ? 'Next Exercise'
+                : 'Complete Workout',
+              onPressed: () {
+                if (_currentExerciseIndex < widget.workoutPlan.exercises.length - 1) {
+                  setState(() {
+                    _currentExerciseIndex++;
+                    _currentSetNumber = 1;
+                  });
+                  _loadPreviousSet();
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Finish Workout?'),
+                      content: const Text('Mark this workout as complete?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Continue'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Complete'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
               leadingIcon: null,
             ),
             const SizedBox(height: 12),

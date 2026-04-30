@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../navigation/app_router.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/widgets.dart';
@@ -32,9 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.textSecondary,
               ),
             ),
-            const Text(
-              'Alex Mercer ',
-              style: TextStyle(
+            Text(
+              '${FirebaseAuth.instance.currentUser?.displayName ?? 'User'} ',
+              style: const TextStyle(
                 fontFamily: 'Lexend',
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -109,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Next workout card
             AppCard(
               onTap: () {
-                // Switch to workout tab via callback would normally be here
+                Navigator.pushNamed(context, AppRouter.mainShell, arguments: 1);
               },
               child: Row(
                 children: [
@@ -205,15 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _QuickAction(
                     icon: Icons.add,
                     label: 'Log\nWorkout',
-                    onTap: () {},
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _QuickAction(
-                    icon: Icons.restaurant_menu,
-                    label: 'Log\nMeal',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRouter.mainShell, arguments: 1);
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -221,7 +217,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _QuickAction(
                     icon: Icons.emoji_events,
                     label: 'View\nPRs',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRouter.mainShell, arguments: 2);
+                    },
                   ),
                 ),
               ],
