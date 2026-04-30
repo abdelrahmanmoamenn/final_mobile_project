@@ -19,8 +19,20 @@ Future<void> main() async {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        // Use the default options from your firebase_options.dart
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      // If it already exists, just use the current instance
+      Firebase.app();
+    }
+  } catch (e) {
+    // This catches the error if it attempts to re-initialize during a Hot Restart
+    debugPrint("Firebase already initialized: $e");
+  }
   runApp(const IronCoreApp());
 }
 
