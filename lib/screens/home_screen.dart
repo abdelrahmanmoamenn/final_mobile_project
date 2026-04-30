@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const Text(
-              'Alex Mercer 💪',
+              'Alex Mercer ',
               style: TextStyle(
                 fontFamily: 'Lexend',
                 fontSize: 28,

@@ -38,7 +38,7 @@ class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: const Text(
-        'COACHAI',
+        'FORM',
         style: TextStyle(
           fontFamily: 'Lexend',
           fontSize: 18,
