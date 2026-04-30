@@ -11,6 +11,7 @@ import 'utils/app_colors.dart';
 import 'screens/home_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/stats_screen.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 
@@ -85,7 +86,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = const [
     HomeScreen(),
     WorkoutScreen(),
-    Scaffold(body: Center(child: Text('Stats'))),
+    StatsScreen(),
     ProfileScreen(),
   ];
 
