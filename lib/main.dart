@@ -11,14 +11,17 @@ import 'utils/app_colors.dart';
 import 'screens/home_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/profile_screen.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize sqflite for desktop/Windows
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
