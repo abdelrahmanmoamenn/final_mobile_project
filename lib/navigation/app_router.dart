@@ -8,9 +8,6 @@ import '../screens/profile_screen.dart';
 import '../screens/sign_up_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/workout_screen.dart';
-import '../screens/active_workout_screen.dart';
-import '../screens/profile_screen.dart';
-import '../main.dart';
 
 class AppRouter {
   static const String splash = '/';
@@ -35,8 +32,6 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
-        //case mainShell:
-        return MaterialPageRoute(builder: (_) => const MainShell());
       case workout:
         return MaterialPageRoute(builder: (_) => const WorkoutScreen());
       case activeWorkout:
