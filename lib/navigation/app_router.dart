@@ -20,6 +20,7 @@ class AppRouter {
   static const String workout = '/workout';
   static const String activeWorkout = '/active-workout';
   static const String profile = '/profile';
+  static const String stats = '/stats';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {

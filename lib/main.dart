@@ -11,16 +11,32 @@ import 'utils/app_colors.dart';
 import 'screens/home_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/stats_screen.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize sqflite for desktop/Windows
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        // Use the default options from your firebase_options.dart
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      // If it already exists, just use the current instance
+      Firebase.app();
+    }
+  } catch (e) {
+    // This catches the error if it attempts to re-initialize during a Hot Restart
+    debugPrint("Firebase already initialized: $e");
+  }
   runApp(const IronCoreApp());
 }
 
@@ -70,7 +86,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = const [
     HomeScreen(),
     WorkoutScreen(),
-    Scaffold(body: Center(child: Text('Stats'))),
+    StatsScreen(),
     ProfileScreen(),
   ];
 
