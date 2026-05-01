@@ -265,7 +265,7 @@ class DatabaseService {
         };
         await db.update(
           'personal_records',
-          dataToSync!,
+          dataToSync,
           where: 'userId = ? AND exerciseName = ?',
           whereArgs: [userId, exerciseName],
         );

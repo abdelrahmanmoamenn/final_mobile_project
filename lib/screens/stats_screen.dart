@@ -101,15 +101,6 @@ class _StatsScreenState extends State<StatsScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _loadStatsIfNeeded() {
-    final now = DateTime.now();
-    // Only load if more than 1 second has passed (prevents infinite loops)
-    if (now.difference(_lastLoadTime).inSeconds > 1) {
-      _lastLoadTime = now;
-      _loadStats();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final avgWeightStr = _avgWeight != null
@@ -303,17 +294,17 @@ class _StatsScreenState extends State<StatsScreen> with WidgetsBindingObserver {
   }
 
   /// Counts how many consecutive days (ending today) have workout data.
-  int _calcStreak() {
-    int streak = 0;
-    final flat = _consistencyData.reversed.expand((w) => w.reversed).toList();
-    for (final v in flat) {
-      if (v > 0)
-        streak++;
-      else
-        break;
-    }
-    return streak;
-  }
+  // int _calcStreak() {
+  //   int streak = 0;
+  //   final flat = _consistencyData.reversed.expand((w) => w.reversed).toList();
+  //   for (final v in flat) {
+  //     if (v > 0)
+  //       streak++;
+  //     else
+  //       break;
+  //   }
+  //   return streak;
+  // }
 
   String _formatVolume(double v) {
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
