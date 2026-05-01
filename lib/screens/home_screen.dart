@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../navigation/app_router.dart';
+import '../services/database_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/widgets.dart';
@@ -14,6 +15,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _databaseService = DatabaseService();
+  final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+
+  int _workoutsThisWeek = 0;
+  int _caloriesBurned = 0;
+  int _streak = 0;
+  Set<int> _completedDays = {};
+  int _todayIndex = DateTime.now().weekday - 1; // 0=Mon
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    _loadWeekProgress();
+  }
+
+  Future<void> _loadStats() async {
+    final workouts = await _databaseService.getWorkoutsThisWeek(_userId);
+    final calories = await _databaseService.getCaloriesBurnedThisWeek(_userId);
+    final streak = await _databaseService.getStreak(_userId);
+    if (mounted) {
+      setState(() {
+        _workoutsThisWeek = workouts;
+        _caloriesBurned = calories;
+        _streak = streak;
+      });
+    }
+  }
+
+  Future<void> _loadWeekProgress() async {
+    final grid = await _databaseService.getConsistencyGrid(_userId, weeks: 1);
+    if (grid.isNotEmpty && mounted) {
+      final week = grid.first;
+      final completed = <int>{};
+      for (int i = 0; i < week.length; i++) {
+        if (week[i] > 0) completed.add(i);
+      }
+      setState(() => _completedDays = completed);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,9 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: AppColors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'Week 4',
-                          style: TextStyle(
+                        child: Text(
+                          'Week ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
+                          style: const TextStyle(
                             fontFamily: 'Lexend',
                             fontSize: 11,
                             color: AppColors.primary,
@@ -90,17 +131,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       _StatItem(
                         label: 'Workouts',
-                        value: '4',
+                        value: '$_workoutsThisWeek',
                         unit: 'this week',
                       ),
                       _Divider(),
                       _StatItem(
                         label: 'Calories',
-                        value: '1,840',
+                        value: _caloriesBurned > 0 ? _caloriesBurned.toString() : '0',
                         unit: 'burned',
                       ),
                       _Divider(),
-                      _StatItem(label: 'Streak', value: '12', unit: 'days'),
+                      _StatItem(label: 'Streak', value: '$_streak', unit: 'days'),
                     ],
                   ),
                 ],
@@ -187,8 +228,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         .map(
                           (e) => _DayDot(
                             day: e.value,
-                            isCompleted: e.key < 4,
-                            isToday: e.key == 3,
+                            isCompleted: _completedDays.contains(e.key),
+                            isToday: e.key == _todayIndex,
                           ),
                         )
                         .toList(),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
+import '../utils/app_error_logger.dart';
 import '../widgets/widgets.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -13,7 +14,8 @@ class StatsScreen extends StatefulWidget {
   State<StatsScreen> createState() => _StatsScreenState();
 }
 
-class _StatsScreenState extends State<StatsScreen> {
+class _StatsScreenState extends State<StatsScreen>
+    with WidgetsBindingObserver {
   final _db = DatabaseService();
   late final String _userId;
 
@@ -22,6 +24,7 @@ class _StatsScreenState extends State<StatsScreen> {
   // Loaded from DB
   double? _avgWeight;
   double? _weightChange;
+  double? _avgDuration;
   Map<String, List<double>> _volumeData = {
     '1W': [0],
     '1M': [0, 0, 0, 0],
@@ -30,37 +33,79 @@ class _StatsScreenState extends State<StatsScreen> {
   List<List<int>> _consistencyData = List.generate(5, (_) => List.filled(7, 0));
 
   bool _loading = true;
+  String? _errorMessage;
+  DateTime _lastLoadTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     _loadStats();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadStats();
+    }
+  }
+
   Future<void> _loadStats() async {
-    setState(() => _loading = true);
-
-    final results = await Future.wait([
-      _db.getAverageWeight(_userId),
-      _db.getWeightChangeSinceLastWeek(_userId),
-      _db.getWeeklyVolume(_userId, weeks: 1),
-      _db.getWeeklyVolume(_userId, weeks: 4),
-      _db.getWeeklyVolume(_userId, weeks: 12),
-      _db.getConsistencyGrid(_userId, weeks: 5),
-    ]);
-
     setState(() {
-      _avgWeight = results[0] as double?;
-      _weightChange = results[1] as double?;
-      _volumeData = {
-        '1W': results[2] as List<double>,
-        '1M': results[3] as List<double>,
-        '3M': results[4] as List<double>,
-      };
-      _consistencyData = results[5] as List<List<int>>;
-      _loading = false;
+      _loading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final results = await Future.wait([
+        _db.getAverageWeight(_userId),
+        _db.getWeightChangeSinceLastWeek(_userId),
+        _db.getWeeklyVolume(_userId, weeks: 1),
+        _db.getWeeklyVolume(_userId, weeks: 4),
+        _db.getWeeklyVolume(_userId, weeks: 12),
+        _db.getConsistencyGrid(_userId, weeks: 5),
+        _db.getAverageWorkoutDuration(_userId),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _avgWeight = results[0] as double?;
+          _weightChange = results[1] as double?;
+          _volumeData = {
+            '1W': results[2] as List<double>,
+            '1M': results[3] as List<double>,
+            '3M': results[4] as List<double>,
+          };
+          _consistencyData = results[5] as List<List<int>>;
+          _avgDuration = results[6] as double?;
+          _loading = false;
+        });
+      }
+    } catch (e, stack) {
+      appError('StatsScreen._loadStats', e, stack);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _errorMessage = 'Failed to load stats. Please try again.';
+        });
+      }
+    }
+  }
+
+  void _loadStatsIfNeeded() {
+    final now = DateTime.now();
+    // Only load if more than 1 second has passed (prevents infinite loops)
+    if (now.difference(_lastLoadTime).inSeconds > 1) {
+      _lastLoadTime = now;
+      _loadStats();
+    }
   }
 
   @override
@@ -78,12 +123,59 @@ class _StatsScreenState extends State<StatsScreen> {
       _weightChange! < 0 ? AppColors.success : AppColors.danger;
     }
 
+    // Format average duration
+    final avgDurationStr = _avgDuration != null
+        ? _avgDuration!.toInt().toString()
+        : '—';
+    String durationSub = 'No data yet';
+    Color durationColor = AppColors.textMuted;
+    if (_avgDuration != null) {
+      if (_avgDuration! < 30) {
+        durationSub = 'Too short';
+        durationColor = AppColors.danger;
+      } else if (_avgDuration! <= 60) {
+        durationSub = 'Optimal';
+        durationColor = AppColors.success;
+      } else {
+        durationSub = 'Long session';
+        durationColor = AppColors.warning;
+      }
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CoachAIAppBar(),
       body: _loading
           ? const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
+      )
+          : _errorMessage != null
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: AppColors.danger,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadStats,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       )
           : RefreshIndicator(
         onRefresh: _loadStats,
@@ -119,8 +211,8 @@ class _StatsScreenState extends State<StatsScreen> {
                       value: _formatVolume(
                         (_volumeData['1M'] ?? []).fold(0.0, (a, b) => a + b),
                       ),
-                      sub: '+8% this week',
-                      subColor: AppColors.success,
+                      sub: _getVolumeTrend(),
+                      subColor: _getVolumeTrendColor(),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -145,10 +237,10 @@ class _StatsScreenState extends State<StatsScreen> {
                       icon: Icons.timer_outlined,
                       iconColor: AppColors.textSecondary,
                       label: 'Avg Duration',
-                      value: '45',
-                      valueUnit: 'min',
-                      sub: 'Optimal',
-                      subColor: AppColors.textMuted,
+                      value: avgDurationStr,
+                      valueUnit: _avgDuration != null ? 'min' : null,
+                      sub: durationSub,
+                      subColor: durationColor,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -185,6 +277,35 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
       ),
     );
+  }
+
+  /// Calculate volume trend based on recent weeks
+  String _getVolumeTrend() {
+    final weekly = _volumeData['1M'] ?? [];
+    if (weekly.length < 2) return 'No trend yet';
+    
+    final thisWeek = weekly.last;
+    final lastWeek = weekly[weekly.length - 2];
+    
+    if (thisWeek == 0 && lastWeek == 0) return 'No workouts';
+    if (lastWeek == 0) return 'First workout';
+    
+    final change = ((thisWeek - lastWeek) / lastWeek * 100).round();
+    return change >= 0 ? '+$change% vs last week' : '$change% vs last week';
+  }
+
+  Color _getVolumeTrendColor() {
+    final weekly = _volumeData['1M'] ?? [];
+    if (weekly.length < 2) return AppColors.textMuted;
+    
+    final thisWeek = weekly.last;
+    final lastWeek = weekly[weekly.length - 2];
+    
+    if (thisWeek == 0 && lastWeek == 0) return AppColors.textMuted;
+    if (lastWeek == 0) return AppColors.primary;
+    
+    final change = thisWeek - lastWeek;
+    return change >= 0 ? AppColors.success : AppColors.danger;
   }
 
   /// Counts how many consecutive days (ending today) have workout data.

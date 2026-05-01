@@ -56,8 +56,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      _showError('Enter a valid email first, then tap Forgot Password.');
+    final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+    if (email.isEmpty || !emailRegex.hasMatch(email)) {
+      _showError('Please enter a valid email address.');
       return;
     }
 

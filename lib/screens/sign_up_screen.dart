@@ -49,7 +49,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await credential.user?.reload();
 
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.mainShell, (_) => false);
     } on FirebaseAuthException catch (e) {
       _showError(_mapAuthError(e));
     } catch (_) {

@@ -13,7 +13,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with WidgetsBindingObserver {
   final _databaseService = DatabaseService();
   final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
   late Future<List<PersonalRecord>> _personalRecordsFuture;
@@ -21,7 +22,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _personalRecordsFuture = _databaseService.getPersonalRecords(_userId);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadPersonalRecords();
+    }
+  }
+
+  Future<void> _loadPersonalRecords() async {
+    if (!mounted) return;
+    setState(() {
+      _personalRecordsFuture = _databaseService.getPersonalRecords(_userId);
+    });
   }
 
   @override
@@ -29,11 +51,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CoachAIAppBar(showAvatar: false),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _databaseService.getPersonalRecords(_userId);
+          setState(() {}); // Trigger rebuild with new data
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
             // User Header
             const SizedBox(height: 10),
             Center(
@@ -231,6 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
       ),
     );
   }

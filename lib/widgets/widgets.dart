@@ -1,7 +1,8 @@
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '/utils/app_colors.dart';
-import '/utils/app_text_styles.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_text_styles.dart';
 
 // ─── App Bar ────────────────────────────────────────────────────────────────
 class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -240,31 +241,39 @@ class SectionHeader extends StatelessWidget {
 // ─── Primary Button ──────────────────────────────────────────────────────────
 class PrimaryButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final String? text;      // backward-compat alias for label
+  final VoidCallback? onPressed;
   final IconData? leadingIcon;
+  final IconData? icon;    // backward-compat alias for leadingIcon
   final Color? backgroundColor;
   final Color? foregroundColor;
   final bool isOutlined;
+  final bool isLoading;
 
   const PrimaryButton({
     super.key,
     required this.label,
     required this.onPressed,
+    this.text = '',
     this.leadingIcon,
+    this.icon,
     this.backgroundColor,
     this.foregroundColor,
     this.isOutlined = false,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = backgroundColor ?? AppColors.primary;
     final fg = foregroundColor ?? AppColors.white;
+    final displayLabel = label.isEmpty ? (text ?? '') : label;
+    final displayIcon = icon ?? leadingIcon;
 
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: isOutlined ? Colors.transparent : bg,
           foregroundColor: isOutlined ? bg : fg,
@@ -274,25 +283,34 @@ class PrimaryButton extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: 20),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-                color: isOutlined ? bg : fg,
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: AppColors.white,
+                ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (displayIcon != null) ...[
+                    Icon(displayIcon, size: 20),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    displayLabel.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: isOutlined ? bg : fg,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -545,55 +563,114 @@ class ExerciseListTile extends StatelessWidget {
   }
 }
 
-// ─── Rest Timer Circle ───────────────────────────────────────────────────────
-class RestTimerCircle extends StatelessWidget {
-  final int remainingSeconds;
+// ─── Rest Timer Circle (Stateful - actual working timer) ─────────────────────
+class RestTimerCircle extends StatefulWidget {
   final int totalSeconds;
+  final VoidCallback? onComplete;
+  final VoidCallback? onSkip;
 
   const RestTimerCircle({
     super.key,
-    required this.remainingSeconds,
     required this.totalSeconds,
+    this.onComplete,
+    this.onSkip,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final progress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0.0;
-    final minutes = remainingSeconds ~/ 60;
-    final secs = remainingSeconds % 60;
+  State<RestTimerCircle> createState() => RestTimerCircleState();
+}
 
-    return SizedBox(
-      width: 160,
-      height: 160,
-      child: CustomPaint(
-        painter: _TimerPainter(progress: progress),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
-                style: const TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
+class RestTimerCircleState extends State<RestTimerCircle> {
+  late int _remainingSeconds;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingSeconds = widget.totalSeconds;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            timer.cancel();
+            widget.onComplete?.call();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void addTime(int seconds) {
+    if (mounted) {
+      setState(() {
+        _remainingSeconds += seconds;
+      });
+    }
+  }
+
+  void skip() {
+    _timer?.cancel();
+    widget.onSkip?.call();
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = widget.totalSeconds > 0 
+        ? _remainingSeconds / widget.totalSeconds 
+        : 0.0;
+    final minutes = _remainingSeconds ~/ 60;
+    final secs = _remainingSeconds % 60;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 160,
+          height: 160,
+          child: CustomPaint(
+            painter: _TimerPainter(progress: progress),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
+                    style: const TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 36,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const Text(
+                    'REST',
+                    style: TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
               ),
-              const Text(
-                'REST',
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

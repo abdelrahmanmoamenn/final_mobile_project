@@ -15,6 +15,14 @@ class WorkoutScreen extends StatefulWidget {
 class _WorkoutScreenState extends State<WorkoutScreen> {
   WorkoutType _selectedType = WorkoutType.push;
 
+  String get _dateLabel {
+    final now = DateTime.now();
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final week = ((now.day - 1) ~/ 7) + 1;
+    return '${days[now.weekday - 1]}, ${months[now.month - 1]} ${now.day} • Week $week';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,9 +44,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const Text(
-                  'Thursday, Oct 12 • Week 4',
-                  style: TextStyle(
+                Text(
+                  _dateLabel,
+                  style: const TextStyle(
                     fontFamily: 'Lexend',
                     fontSize: 16,
                     color: AppColors.textSecondary,

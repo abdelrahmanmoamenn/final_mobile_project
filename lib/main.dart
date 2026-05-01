@@ -1,17 +1,17 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'firebase_options.dart';
 
-import 'model/user_model.dart';
 import 'navigation/app_router.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_colors.dart';
+import 'utils/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/stats_screen.dart';
+import 'services/connectivity_service.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 
@@ -23,19 +23,20 @@ Future<void> main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+
+  // Initialize network connectivity monitoring
+  await ConnectivityService().init();
+
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
-        // Use the default options from your firebase_options.dart
         options: DefaultFirebaseOptions.currentPlatform,
       );
     } else {
-      // If it already exists, just use the current instance
       Firebase.app();
     }
   } catch (e) {
-    // This catches the error if it attempts to re-initialize during a Hot Restart
-    debugPrint("Firebase already initialized: $e");
+    if (kDebugMode) debugPrint("Firebase already initialized: $e");
   }
   runApp(const IronCoreApp());
 }
@@ -45,23 +46,12 @@ class IronCoreApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthUserModel>(
-      create: (_) => AuthUserModel(),
-      child: MaterialApp(
-        title: 'Iron Core',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF060C1D),
-          fontFamily: 'Roboto',
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.brandBlue,
-            surface: AppColors.surface,
-          ),
-        ),
-        onGenerateRoute: AppRouter.onGenerateRoute,
-        home: const SplashScreen(),
-      ),
+    return MaterialApp(
+      title: 'Iron Core',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      onGenerateRoute: AppRouter.onGenerateRoute,
+      home: const SplashScreen(),
     );
   }
 }
