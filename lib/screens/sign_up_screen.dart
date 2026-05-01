@@ -40,16 +40,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _loading = true);
 
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
       await credential.user?.updateDisplayName(_nameController.text.trim());
       await credential.user?.reload();
 
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(AppRouter.mainShell, (_) => false);
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRouter.mainShell, (_) => false);
     } on FirebaseAuthException catch (e) {
       _showError(_mapAuthError(e));
     } catch (_) {
@@ -101,6 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const Text(
                   'Create Account',
                   style: TextStyle(
+                    fontFamily: 'Lexend',
                     color: AppColors.textPrimary,
                     fontSize: 36,
                     fontWeight: FontWeight.w800,
@@ -108,8 +112,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Build your profile and start tracking your performance.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 17),
+                  'Join FORM and start your transformation.',
+                  style: TextStyle(
+                    fontFamily: 'Lexend',
+                    color: AppColors.textSecondary,
+                    fontSize: 17,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Container(
@@ -117,7 +125,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.card.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -126,7 +136,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hint: 'Your full name',
                         controller: _nameController,
                         textInputAction: TextInputAction.next,
-                        prefixIcon: const Icon(Icons.person_outline, color: AppColors.textMuted),
+                        prefixIcon: const Icon(
+                          Icons.person_outline,
+                          color: AppColors.textMuted,
+                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter your name';
@@ -141,10 +154,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: AppColors.textMuted,
+                        ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Email is required';
-                          if (!value.contains('@')) return 'Please enter a valid email';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Email is required';
+                          if (!value.contains('@'))
+                            return 'Please enter a valid email';
                           return null;
                         },
                       ),
@@ -155,17 +173,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.next,
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: AppColors.textMuted,
+                        ),
                         suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
                             color: AppColors.textMuted,
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Password is required';
-                          if (value.length < 6) return 'Password must be at least 6 characters';
+                          if (value == null || value.isEmpty)
+                            return 'Password is required';
+                          if (value.length < 6)
+                            return 'Password must be at least 6 characters';
                           return null;
                         },
                       ),
@@ -177,9 +204,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         obscureText: _obscureConfirmPassword,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _createAccount(),
-                        prefixIcon: const Icon(Icons.lock_person_outlined, color: AppColors.textMuted),
+                        prefixIcon: const Icon(
+                          Icons.lock_person_outlined,
+                          color: AppColors.textMuted,
+                        ),
                         suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                          onPressed: () => setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          ),
                           icon: Icon(
                             _obscureConfirmPassword
                                 ? Icons.visibility_off_outlined
@@ -213,13 +246,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     const Text(
                       'Already have an account? ',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                      style: TextStyle(
+                        fontFamily: 'Lexend',
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                      ),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
                         'Sign In',
                         style: TextStyle(
+                          fontFamily: 'Lexend',
                           color: AppColors.brandBlue,
                           fontWeight: FontWeight.w700,
                           fontSize: 16,

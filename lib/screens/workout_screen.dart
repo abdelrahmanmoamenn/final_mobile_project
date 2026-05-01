@@ -17,8 +17,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   String get _dateLabel {
     final now = DateTime.now();
-    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     final week = ((now.day - 1) ~/ 7) + 1;
     return '${days[now.weekday - 1]}, ${months[now.month - 1]} ${now.day} • Week $week';
   }
@@ -27,7 +48,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CoachAIAppBar(),
+      appBar: const FormAppBar(),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -35,20 +56,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Today's Focus",
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                const Text("Today's Focus", style: AppTextStyles.headline1),
                 Text(
                   _dateLabel,
-                  style: const TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 16,
+                  style: AppTextStyles.body1.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -62,25 +73,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       _WorkoutTab(
                         label: 'Push',
                         isActive: _selectedType == WorkoutType.push,
-                        onTap: () => setState(() => _selectedType = WorkoutType.push),
+                        onTap: () =>
+                            setState(() => _selectedType = WorkoutType.push),
                       ),
                       const SizedBox(width: 12),
                       _WorkoutTab(
                         label: 'Pull',
                         isActive: _selectedType == WorkoutType.pull,
-                        onTap: () => setState(() => _selectedType = WorkoutType.pull),
+                        onTap: () =>
+                            setState(() => _selectedType = WorkoutType.pull),
                       ),
                       const SizedBox(width: 12),
                       _WorkoutTab(
                         label: 'Legs',
                         isActive: _selectedType == WorkoutType.legs,
-                        onTap: () => setState(() => _selectedType = WorkoutType.legs),
+                        onTap: () =>
+                            setState(() => _selectedType = WorkoutType.legs),
                       ),
                       const SizedBox(width: 12),
                       _WorkoutTab(
                         label: 'Custom',
                         isActive: _selectedType == WorkoutType.custom,
-                        onTap: () => setState(() => _selectedType = WorkoutType.custom),
+                        onTap: () =>
+                            setState(() => _selectedType = WorkoutType.custom),
                       ),
                     ],
                   ),
@@ -95,26 +110,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 SectionHeader(
                   title: 'Exercises (${_currentWorkout.exercises.length})',
                   icon: Icons.list,
-                  actionLabel: 'Edit',
                 ),
                 const SizedBox(height: 16),
 
                 // Exercises List
-                ..._currentWorkout.exercises.map((exercise) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: ExerciseListTile(
-                    name: exercise.name,
-                    muscleGroup: exercise.muscleGroup,
-                    sets: exercise.sets,
-                    reps: exercise.reps,
-                    restSeconds: exercise.restSeconds,
+                ..._currentWorkout.exercises.map(
+                  (exercise) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ExerciseListTile(
+                      name: exercise.name,
+                      muscleGroup: exercise.muscleGroup,
+                      sets: exercise.sets,
+                      reps: exercise.reps,
+                      restSeconds: exercise.restSeconds,
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 120), // Space for bottom button
               ],
             ),
           ),
-            Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
@@ -173,22 +189,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   children: [
                     Text(
                       _currentWorkout.estimatedBurnKcal.toString(),
-                      style: const TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.headline3,
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'kcal',
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    const Text('kcal', style: AppTextStyles.label),
                   ],
                 ),
               ],
@@ -204,11 +208,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.timer,
-                      color: AppColors.primary,
-                      size: 18,
-                    ),
+                    Icon(Icons.timer, color: AppColors.primary, size: 18),
                     const SizedBox(width: 6),
                     Text('Duration', style: AppTextStyles.label),
                   ],
@@ -220,22 +220,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   children: [
                     Text(
                       _currentWorkout.estimatedDurationMin.toString(),
-                      style: const TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.headline3,
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'min',
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    const Text('min', style: AppTextStyles.label),
                   ],
                 ),
               ],
@@ -252,7 +240,11 @@ class _WorkoutTab extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _WorkoutTab({required this.label, required this.isActive, required this.onTap});
+  const _WorkoutTab({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

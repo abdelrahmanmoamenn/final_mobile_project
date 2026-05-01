@@ -128,20 +128,22 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const SizedBox(height: 34),
                   const Text(
-                    'Form',
+                    'FORM',
                     style: TextStyle(
-                      fontSize: 58,
+                      fontFamily: 'Lexend',
+                      fontSize: 48,
                       height: 1,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.6,
+                      letterSpacing: 2.0,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 22),
                   const Text(
-                    'Achieve Your True Form',
+                    'Elevate Your Fitness',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontFamily: 'Lexend',
+                      fontSize: 18,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),

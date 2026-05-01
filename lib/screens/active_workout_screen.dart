@@ -17,50 +17,36 @@ class ActiveWorkoutScreen extends StatefulWidget {
   State<ActiveWorkoutScreen> createState() => _ActiveWorkoutScreenState();
 }
 
-class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
-    with WidgetsBindingObserver {
+class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   late int _currentExerciseIndex;
   late double _currentWeight;
   late int _currentReps;
   late int _currentSetNumber;
-  String _previousWeight = '0';
-  String _previousReps = '0';
   final _databaseService = DatabaseService();
   final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-  bool _currentSetLogged = false;
   bool _isLogging = false;
+  bool _isSessionEnded = false;
 
   // Timer state - now using actual countdown timer
-  final GlobalKey<RestTimerCircleState> _timerKey = GlobalKey<RestTimerCircleState>();
+  final GlobalKey<RestTimerCircleState> _timerKey =
+      GlobalKey<RestTimerCircleState>();
   bool _timerActive = false;
   int _restDuration = 90;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _currentExerciseIndex = 0;
     _currentSetNumber = 1;
     _currentWeight = 185.0;
     _currentReps = 8;
     _startWorkoutSession();
-    _loadPreviousSet();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _endWorkoutSession();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      _endWorkoutSession();
-    }
   }
 
   Future<void> _startWorkoutSession() async {
@@ -72,6 +58,8 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
   }
 
   Future<void> _endWorkoutSession() async {
+    if (_isSessionEnded) return;
+    _isSessionEnded = true;
     try {
       await _databaseService.endWorkoutSession(_userId);
     } catch (e, stack) {
@@ -79,33 +67,21 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
   }
 
-  void _loadPreviousSet() async {
-    if (_currentExerciseIndex >= widget.workoutPlan.exercises.length) return;
+  void _startRestTimer(int seconds) {
+    if (seconds <= 0) return;
+    setState(() {
+      _restDuration = seconds;
+      _timerActive = true;
+    });
+    // Force the child widget to reset and start
+    _timerKey.currentState?.reset(seconds);
+  }
 
-    final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
-    final lastSet = await _databaseService.getLastLoggedSet(
-      userId: _userId,
-      exerciseId: exercise.id,
-    );
-
-    if (mounted) {
-      setState(() {
-        if (lastSet != null) {
-          _previousWeight = '${(lastSet['weight'] as double).toInt()} lbs';
-          _previousReps = '${lastSet['reps']} reps';
-          _currentWeight = lastSet['weight'] as double;
-          _currentReps = lastSet['reps'] as int;
-        } else {
-          _previousWeight = 'No data';
-          _previousReps = 'No data';
-          _currentWeight = 185.0;
-          _currentReps = 8;
-        }
-        // Start rest timer after loading previous set data
-        _restDuration = exercise.restSeconds;
-        _timerActive = true;
-      });
-    }
+  void _stopRestTimer() {
+    setState(() {
+      _timerActive = false;
+      _restDuration = 0;
+    });
   }
 
   void _addRestTime(int seconds) {
@@ -115,16 +91,18 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
   }
 
-  void _skipRest() {
-    setState(() {
-      _timerActive = false;
-    });
+  void _togglePause() {
+    if (!_timerActive) {
+      final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
+      _startRestTimer(exercise.restSeconds);
+    } else {
+      _timerKey.currentState?.togglePause();
+      setState(() {});
+    }
   }
 
   void _onTimerComplete() {
-    setState(() {
-      _timerActive = false;
-    });
+    _stopRestTimer();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -192,64 +170,38 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
         reps: _currentReps,
       );
 
-      // Show confirmation
+      // Show confirmation and update state
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Set logged: ${_currentWeight.toInt()} lbs × $_currentReps reps'),
+            content: Text(
+              'Set $_currentSetNumber logged: ${_currentWeight.toInt()} lbs × $_currentReps reps',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
-      }
 
-      // Mark current set as logged
-      if (mounted) {
         setState(() {
-          _currentSetLogged = true;
-        });
-      }
-
-      // Move to next set or exercise
-      if (_currentSetNumber < exercise.sets) {
-        if (mounted) {
-          setState(() {
+          if (_currentSetNumber < exercise.sets) {
+            // Move to next set in current exercise
             _currentSetNumber++;
-            _currentSetLogged = false;
-            // Start rest timer between sets
-            _restDuration = exercise.restSeconds;
-            _timerActive = true;
-          });
-        }
-      } else if (_currentExerciseIndex < widget.workoutPlan.exercises.length - 1) {
-        if (mounted) {
-          setState(() {
+            _startRestTimer(exercise.restSeconds);
+          } else if (_currentExerciseIndex <
+              widget.workoutPlan.exercises.length - 1) {
+            // All sets done for this exercise, move to next exercise automatically
             _currentExerciseIndex++;
             _currentSetNumber = 1;
-            _currentSetLogged = false;
-          });
-          _loadPreviousSet();
-        }
-      } else {
-        // Workout complete - end session and show dialog
-        await _endWorkoutSession();
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Workout Complete!'),
-              content: const Text('Great job! Your workout has been saved.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
+            // Set reps to the next exercise's default
+            _currentReps =
+                widget.workoutPlan.exercises[_currentExerciseIndex].reps;
+            // Start rest timer before starting next exercise
+            _startRestTimer(exercise.restSeconds);
+          } else {
+            // Workout complete - last set of last exercise logged
+            _endWorkoutSession();
+            _showWorkoutCompleteDialog();
+          }
+        });
       }
     } catch (e, stack) {
       appError('ActiveWorkoutScreen._logSet', e, stack);
@@ -263,12 +215,31 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
     }
   }
 
+  void _showWorkoutCompleteDialog() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Workout Complete!'),
+        content: const Text('Great job! Your workout has been saved.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to workout list
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_currentExerciseIndex >= widget.workoutPlan.exercises.length) {
-      return const Scaffold(
-        body: Center(child: Text('Workout Complete!')),
-      );
+      return const Scaffold(body: Center(child: Text('Workout Complete!')));
     }
 
     final exercise = widget.workoutPlan.exercises[_currentExerciseIndex];
@@ -289,13 +260,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
           children: [
             Text(
               widget.workoutPlan.name.toUpperCase(),
-              style: const TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-                letterSpacing: 1.5,
-              ),
+              style: AppTextStyles.labelPrimary,
             ),
             Text(
               'Exercise ${_currentExerciseIndex + 1} of ${widget.workoutPlan.exercises.length}',
@@ -337,15 +302,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    exercise.name,
-                    style: const TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  child: Text(exercise.name, style: AppTextStyles.headline2),
                 ),
                 IconButton(
                   icon: const Icon(
@@ -361,7 +318,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
               children: [
                 MuscleTag(label: exercise.muscleGroup, isActive: true),
                 const SizedBox(width: 8),
-                Text('• Rest: ${exercise.restSeconds}s', style: AppTextStyles.label),
+                Text(
+                  '• Rest: ${exercise.restSeconds}s',
+                  style: AppTextStyles.label,
+                ),
               ],
             ),
             const SizedBox(height: 32),
@@ -379,39 +339,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                           const SizedBox(height: 4),
                           RichText(
                             text: TextSpan(
-                              style: const TextStyle(
-                                fontFamily: 'Lexend',
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                              style: AppTextStyles.headline3,
                               children: [
                                 TextSpan(text: 'Set $_currentSetNumber '),
                                 TextSpan(
                                   text: 'of ${exercise.sets}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                  style: AppTextStyles.body2.copyWith(
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('PREVIOUS', style: AppTextStyles.label),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$_previousWeight × $_previousReps',
-                            style: const TextStyle(
-                              fontFamily: 'Lexend',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -443,39 +380,27 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                     ],
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _logSet,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_outline, size: 20),
-                          SizedBox(width: 8),
-                          Text('Log Set'),
-                        ],
-                      ),
-                    ),
+                  PrimaryButton(
+                    label: 'Log Set',
+                    leadingIcon: Icons.check_circle_outline,
+                    onPressed: _logSet,
+                    isLoading: _isLogging,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            // Show countdown timer when active
+            // Permanent timer display
             Center(
-              child: _timerActive
-                  ? RestTimerCircle(
-                      key: ValueKey('timer_${_currentExerciseIndex}_$_currentSetNumber'),
-                      totalSeconds: _restDuration,
-                      onComplete: _onTimerComplete,
-                      onSkip: _skipRest,
-                    )
-                  : const SizedBox(height: 160),
+              child: RestTimerCircle(
+                key: _timerKey,
+                totalSeconds: _timerActive
+                    ? _restDuration
+                    : exercise.restSeconds,
+                isRunning: _timerActive,
+                onComplete: _onTimerComplete,
+                onSkip: _stopRestTimer,
+              ),
             ),
             const SizedBox(height: 24),
             Row(
@@ -486,34 +411,35 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen>
                   onTap: () => _addRestTime(30),
                 ),
                 const SizedBox(width: 16),
-                _OutlineActionButton(label: 'Skip', onTap: _skipRest),
+                _OutlineActionButton(
+                  label: (_timerKey.currentState?.isTimerRunning ?? false)
+                      ? 'Pause'
+                      : 'Play',
+                  onTap: _togglePause,
+                ),
               ],
             ),
             const SizedBox(height: 24),
             PrimaryButton(
-              label: _currentExerciseIndex < widget.workoutPlan.exercises.length - 1
+              label:
+                  _currentExerciseIndex <
+                      widget.workoutPlan.exercises.length - 1
                   ? 'Next Exercise'
-                  : 'Complete Workout',
+                  : 'Finish Workout',
               onPressed: () async {
-                if (!_currentSetLogged) {
-                  // Auto-log the current set before advancing
-                  await _logSet();
-                  // If logSet fails or moves to workout-complete, don't proceed
-                  if (!mounted) return;
-                }
-                if (_currentExerciseIndex < widget.workoutPlan.exercises.length - 1) {
+                if (_currentExerciseIndex <
+                    widget.workoutPlan.exercises.length - 1) {
                   setState(() {
                     _currentExerciseIndex++;
                     _currentSetNumber = 1;
+                    _currentReps = widget
+                        .workoutPlan
+                        .exercises[_currentExerciseIndex]
+                        .reps;
+                    _timerActive = false; // Stop timer if moving manually
                   });
-                  _loadPreviousSet();
                 } else {
-                  // Complete Workout - mark all sets as logged to allow proceed
-                  if (mounted) {
-                    setState(() {
-                      _currentSetLogged = true;
-                    });
-                  }
+                  // Final exercise manual finish
                   if (!context.mounted) return;
                   showDialog(
                     context: context,

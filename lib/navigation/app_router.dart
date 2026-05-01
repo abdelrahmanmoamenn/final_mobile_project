@@ -8,6 +8,7 @@ import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/sign_up_screen.dart';
 import '../screens/splash_screen.dart';
+import '../screens/stats_screen.dart';
 import '../screens/workout_screen.dart';
 
 class AppRouter {
@@ -34,17 +35,24 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
       case home:
       case mainShell:
-        final int index = settings.arguments is int ? settings.arguments as int : 0;
-        return MaterialPageRoute(builder: (_) => MainShell(initialIndex: index));
+        final int index = settings.arguments is int
+            ? settings.arguments as int
+            : 0;
+        return MaterialPageRoute(
+          builder: (_) => MainShell(initialIndex: index),
+        );
       case workout:
         return MaterialPageRoute(builder: (_) => const WorkoutScreen());
       case activeWorkout:
         final args = settings.arguments as WorkoutPlan?;
         return MaterialPageRoute(
-          builder: (_) => ActiveWorkoutScreen(workoutPlan: args ?? SampleData.legsWorkout),
+          builder: (_) =>
+              ActiveWorkoutScreen(workoutPlan: args ?? SampleData.legsWorkout),
         );
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      case stats:
+        return MaterialPageRoute(builder: (_) => const StatsScreen());
       default:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
     }

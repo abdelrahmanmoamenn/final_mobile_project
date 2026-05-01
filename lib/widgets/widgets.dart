@@ -5,12 +5,12 @@ import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 
 // ─── App Bar ────────────────────────────────────────────────────────────────
-class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
+class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showAvatar;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onNotificationTap;
 
-  const CoachAIAppBar({
+  const FormAppBar({
     super.key,
     this.showAvatar = true,
     this.onAvatarTap,
@@ -27,13 +27,14 @@ class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: GestureDetector(
                 onTap: onAvatarTap,
                 child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary, width: 2),
-                  ),
+                  decoration: BoxDecoration(shape: BoxShape.circle),
                   child: const CircleAvatar(
-                    backgroundColor: AppColors.tertiary,
-                    child: Icon(Icons.person, color: AppColors.white, size: 18),
+                    backgroundColor: Colors.transparent,
+                    child: Icon(
+                      Icons.language,
+                      color: AppColors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -44,9 +45,9 @@ class CoachAIAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: TextStyle(
           fontFamily: 'Lexend',
           fontSize: 18,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           color: AppColors.primary,
-          letterSpacing: 3,
+          letterSpacing: 2,
         ),
       ),
       actions: [
@@ -101,12 +102,7 @@ class CircularProgressWidget extends StatelessWidget {
             child: Center(
               child: Text(
                 '${(percent * 100).round()}%',
-                style: const TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTextStyles.headline3,
               ),
             ),
           ),
@@ -219,15 +215,7 @@ class SectionHeader extends StatelessWidget {
             onTap: onAction,
             child: Row(
               children: [
-                Text(
-                  actionLabel!,
-                  style: const TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 14,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(actionLabel!, style: AppTextStyles.labelPrimary),
                 const SizedBox(width: 4),
                 const Icon(Icons.edit, color: AppColors.primary, size: 16),
               ],
@@ -241,10 +229,10 @@ class SectionHeader extends StatelessWidget {
 // ─── Primary Button ──────────────────────────────────────────────────────────
 class PrimaryButton extends StatelessWidget {
   final String label;
-  final String? text;      // backward-compat alias for label
+  final String? text; // backward-compat alias for label
   final VoidCallback? onPressed;
   final IconData? leadingIcon;
-  final IconData? icon;    // backward-compat alias for leadingIcon
+  final IconData? icon; // backward-compat alias for leadingIcon
   final Color? backgroundColor;
   final Color? foregroundColor;
   final bool isOutlined;
@@ -301,11 +289,7 @@ class PrimaryButton extends StatelessWidget {
                   ],
                   Text(
                     displayLabel.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
+                    style: AppTextStyles.labelPrimary.copyWith(
                       color: isOutlined ? bg : fg,
                     ),
                   ),
@@ -521,22 +505,6 @@ class ExerciseListTile extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: onPlay,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.play_arrow,
-                color: AppColors.white,
-                size: 22,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -568,12 +536,14 @@ class RestTimerCircle extends StatefulWidget {
   final int totalSeconds;
   final VoidCallback? onComplete;
   final VoidCallback? onSkip;
+  final bool isRunning;
 
   const RestTimerCircle({
     super.key,
     required this.totalSeconds,
     this.onComplete,
     this.onSkip,
+    this.isRunning = true,
   });
 
   @override
@@ -588,10 +558,30 @@ class RestTimerCircleState extends State<RestTimerCircle> {
   void initState() {
     super.initState();
     _remainingSeconds = widget.totalSeconds;
-    _startTimer();
+    if (widget.isRunning) {
+      _startTimer();
+    }
+  }
+
+  @override
+  void didUpdateWidget(RestTimerCircle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isRunning != oldWidget.isRunning) {
+      if (widget.isRunning) {
+        _remainingSeconds = widget.totalSeconds;
+        _startTimer();
+      } else {
+        _timer?.cancel();
+        _remainingSeconds = widget.totalSeconds;
+      }
+    } else if (widget.totalSeconds != oldWidget.totalSeconds &&
+        !widget.isRunning) {
+      _remainingSeconds = widget.totalSeconds;
+    }
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -620,16 +610,36 @@ class RestTimerCircleState extends State<RestTimerCircle> {
     }
   }
 
+  void reset(int seconds) {
+    if (mounted) {
+      setState(() {
+        _timer?.cancel();
+        _remainingSeconds = seconds;
+        _startTimer();
+      });
+    }
+  }
+
+  void togglePause() {
+    if (_timer?.isActive ?? false) {
+      _timer?.cancel();
+    } else {
+      _startTimer();
+    }
+    if (mounted) setState(() {}); // Ensure UI updates to show Play/Pause
+  }
+
+  bool get isTimerRunning => _timer?.isActive ?? false;
+
   void skip() {
     _timer?.cancel();
     widget.onSkip?.call();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final progress = widget.totalSeconds > 0 
-        ? _remainingSeconds / widget.totalSeconds 
+    final progress = widget.totalSeconds > 0
+        ? _remainingSeconds / widget.totalSeconds
         : 0.0;
     final minutes = _remainingSeconds ~/ 60;
     final secs = _remainingSeconds % 60;
@@ -641,27 +651,31 @@ class RestTimerCircleState extends State<RestTimerCircle> {
           width: 160,
           height: 160,
           child: CustomPaint(
-            painter: _TimerPainter(progress: progress),
+            painter: _TimerPainter(
+              progress: progress,
+              isActive: widget.isRunning,
+            ),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}',
-                    style: const TextStyle(
-                      fontFamily: 'Lexend',
+                    style: AppTextStyles.headline1.copyWith(
                       fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: widget.isRunning
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
-                  const Text(
-                    'REST',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                  Text(
+                    widget.isRunning
+                        ? ((_timer?.isActive ?? false) ? 'REST' : 'PAUSED')
+                        : 'READY',
+                    style: AppTextStyles.label.copyWith(
+                      color: widget.isRunning
+                          ? AppColors.textSecondary
+                          : AppColors.textMuted,
                       letterSpacing: 2,
                     ),
                   ),
@@ -677,8 +691,9 @@ class RestTimerCircleState extends State<RestTimerCircle> {
 
 class _TimerPainter extends CustomPainter {
   final double progress;
+  final bool isActive;
 
-  _TimerPainter({required this.progress});
+  _TimerPainter({required this.progress, this.isActive = true});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -695,16 +710,18 @@ class _TimerPainter extends CustomPainter {
         ..strokeWidth = 6,
     );
 
-    // Glow effect
+    // Glow effect (subtle when inactive)
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
       2 * math.pi * progress,
       false,
       Paint()
-        ..color = AppColors.primary.withValues(alpha: 0.2)
+        ..color = (isActive ? AppColors.primary : AppColors.neutral).withValues(
+          alpha: 0.15,
+        )
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 16
+        ..strokeWidth = 14
         ..strokeCap = StrokeCap.round,
     );
 
@@ -715,7 +732,9 @@ class _TimerPainter extends CustomPainter {
       2 * math.pi * progress,
       false,
       Paint()
-        ..color = AppColors.primary
+        ..color = isActive
+            ? AppColors.primary
+            : AppColors.neutral.withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round,
@@ -723,5 +742,6 @@ class _TimerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TimerPainter old) => old.progress != progress;
+  bool shouldRepaint(_TimerPainter old) =>
+      old.progress != progress || old.isActive != isActive;
 }

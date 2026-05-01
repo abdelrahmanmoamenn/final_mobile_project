@@ -14,8 +14,7 @@ class StatsScreen extends StatefulWidget {
   State<StatsScreen> createState() => _StatsScreenState();
 }
 
-class _StatsScreenState extends State<StatsScreen>
-    with WidgetsBindingObserver {
+class _StatsScreenState extends State<StatsScreen> with WidgetsBindingObserver {
   final _db = DatabaseService();
   late final String _userId;
 
@@ -31,6 +30,7 @@ class _StatsScreenState extends State<StatsScreen>
     '3M': List.filled(12, 0),
   };
   List<List<int>> _consistencyData = List.generate(5, (_) => List.filled(7, 0));
+  int _streak = 0;
 
   bool _loading = true;
   String? _errorMessage;
@@ -72,6 +72,7 @@ class _StatsScreenState extends State<StatsScreen>
         _db.getWeeklyVolume(_userId, weeks: 12),
         _db.getConsistencyGrid(_userId, weeks: 5),
         _db.getAverageWorkoutDuration(_userId),
+        _db.getStreak(_userId),
       ]);
 
       if (mounted) {
@@ -85,6 +86,7 @@ class _StatsScreenState extends State<StatsScreen>
           };
           _consistencyData = results[5] as List<List<int>>;
           _avgDuration = results[6] as double?;
+          _streak = results[7] as int;
           _loading = false;
         });
       }
@@ -119,8 +121,9 @@ class _StatsScreenState extends State<StatsScreen>
     if (_weightChange != null) {
       final sign = _weightChange! >= 0 ? '+' : '';
       weightChangeStr = '$sign${_weightChange} lbs';
-      weightChangeColor =
-      _weightChange! < 0 ? AppColors.success : AppColors.danger;
+      weightChangeColor = _weightChange! < 0
+          ? AppColors.success
+          : AppColors.danger;
     }
 
     // Format average duration
@@ -144,138 +147,129 @@ class _StatsScreenState extends State<StatsScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CoachAIAppBar(),
+      appBar: const FormAppBar(),
       body: _loading
           ? const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      )
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _errorMessage != null
           ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: AppColors.danger,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 16,
-                color: AppColors.textPrimary,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body1,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _loadStats,
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loadStats,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      )
+            )
           : RefreshIndicator(
-        onRefresh: _loadStats,
-        color: AppColors.primary,
-        backgroundColor: AppColors.surface,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              const Text('Performance', style: AppTextStyles.headline1),
-              const SizedBox(height: 4),
-              const Text(
-                'Track your progress and consistency over time.',
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
+              onRefresh: _loadStats,
+              color: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    const Text('Performance', style: AppTextStyles.headline1),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Track your progress and consistency over time.',
+                      style: AppTextStyles.body2,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Top Stats Grid ────────────────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.show_chart,
+                            iconColor: AppColors.textSecondary,
+                            label: 'Total Volume',
+                            value: _formatVolume(
+                              (_volumeData['1M'] ?? []).fold(
+                                0.0,
+                                (a, b) => a + b,
+                              ),
+                            ),
+                            sub: _getVolumeTrend(),
+                            subColor: _getVolumeTrendColor(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.monitor_weight_outlined,
+                            iconColor: AppColors.primary,
+                            label: 'Avg Weight',
+                            value: avgWeightStr,
+                            valueUnit: _avgWeight != null ? 'lbs' : null,
+                            sub: weightChangeStr,
+                            subColor: weightChangeColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.timer_outlined,
+                            iconColor: AppColors.textSecondary,
+                            label: 'Avg Duration',
+                            value: avgDurationStr,
+                            valueUnit: _avgDuration != null ? 'min' : null,
+                            sub: durationSub,
+                            subColor: durationColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.local_fire_department,
+                            iconColor: AppColors.primary,
+                            label: 'Current Streak',
+                            value: _streak.toString(),
+                            valueUnit: 'days',
+                            sub: 'Keep it up!',
+                            subColor: AppColors.primary,
+                            highlight: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Volume Lifted Chart ───────────────────────────────
+                    _VolumeChartCard(
+                      selectedPeriod: _selectedVolumePeriod,
+                      volumeData: _volumeData,
+                      onPeriodChanged: (p) =>
+                          setState(() => _selectedVolumePeriod = p),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Consistency Heatmap ───────────────────────────────
+                    _ConsistencyCard(data: _consistencyData),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // ── Top Stats Grid ────────────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.show_chart,
-                      iconColor: AppColors.textSecondary,
-                      label: 'Total Volume',
-                      value: _formatVolume(
-                        (_volumeData['1M'] ?? []).fold(0.0, (a, b) => a + b),
-                      ),
-                      sub: _getVolumeTrend(),
-                      subColor: _getVolumeTrendColor(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.monitor_weight_outlined,
-                      iconColor: AppColors.primary,
-                      label: 'Avg Weight',
-                      value: avgWeightStr,
-                      valueUnit: _avgWeight != null ? 'lbs' : null,
-                      sub: weightChangeStr,
-                      subColor: weightChangeColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.timer_outlined,
-                      iconColor: AppColors.textSecondary,
-                      label: 'Avg Duration',
-                      value: avgDurationStr,
-                      valueUnit: _avgDuration != null ? 'min' : null,
-                      sub: durationSub,
-                      subColor: durationColor,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.local_fire_department,
-                      iconColor: AppColors.primary,
-                      label: 'Current Streak',
-                      value: _calcStreak().toString(),
-                      valueUnit: 'days',
-                      sub: 'Keep it up!',
-                      subColor: AppColors.primary,
-                      highlight: true,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Volume Lifted Chart ───────────────────────────────
-              _VolumeChartCard(
-                selectedPeriod: _selectedVolumePeriod,
-                volumeData: _volumeData,
-                onPeriodChanged: (p) =>
-                    setState(() => _selectedVolumePeriod = p),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Consistency Heatmap ───────────────────────────────
-              _ConsistencyCard(data: _consistencyData),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -283,13 +277,13 @@ class _StatsScreenState extends State<StatsScreen>
   String _getVolumeTrend() {
     final weekly = _volumeData['1M'] ?? [];
     if (weekly.length < 2) return 'No trend yet';
-    
+
     final thisWeek = weekly.last;
     final lastWeek = weekly[weekly.length - 2];
-    
+
     if (thisWeek == 0 && lastWeek == 0) return 'No workouts';
     if (lastWeek == 0) return 'First workout';
-    
+
     final change = ((thisWeek - lastWeek) / lastWeek * 100).round();
     return change >= 0 ? '+$change% vs last week' : '$change% vs last week';
   }
@@ -297,13 +291,13 @@ class _StatsScreenState extends State<StatsScreen>
   Color _getVolumeTrendColor() {
     final weekly = _volumeData['1M'] ?? [];
     if (weekly.length < 2) return AppColors.textMuted;
-    
+
     final thisWeek = weekly.last;
     final lastWeek = weekly[weekly.length - 2];
-    
+
     if (thisWeek == 0 && lastWeek == 0) return AppColors.textMuted;
     if (lastWeek == 0) return AppColors.primary;
-    
+
     final change = thisWeek - lastWeek;
     return change >= 0 ? AppColors.success : AppColors.danger;
   }
@@ -313,8 +307,10 @@ class _StatsScreenState extends State<StatsScreen>
     int streak = 0;
     final flat = _consistencyData.reversed.expand((w) => w.reversed).toList();
     for (final v in flat) {
-      if (v > 0) streak++;
-      else break;
+      if (v > 0)
+        streak++;
+      else
+        break;
     }
     return streak;
   }
@@ -374,12 +370,7 @@ class _StatCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTextStyles.label,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -392,11 +383,11 @@ class _StatCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   value,
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
+                  style: AppTextStyles.headline3.copyWith(
                     fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: highlight ? AppColors.primary : AppColors.textPrimary,
+                    color: highlight
+                        ? AppColors.primary
+                        : AppColors.textPrimary,
                     height: 1,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -406,29 +397,13 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(width: 3),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    valueUnit!,
-                    style: const TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  child: Text(valueUnit!, style: AppTextStyles.label),
                 ),
               ],
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            sub,
-            style: TextStyle(
-              fontFamily: 'Lexend',
-              fontSize: 11,
-              color: subColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(sub, style: AppTextStyles.caption.copyWith(color: subColor)),
         ],
       ),
     );
@@ -451,8 +426,7 @@ class _VolumeChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = volumeData[selectedPeriod] ?? [];
-    final labels =
-    List.generate(data.length, (i) => 'W${i + 1}');
+    final labels = List.generate(data.length, (i) => 'W${i + 1}');
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -470,25 +444,9 @@ class _VolumeChartCard extends StatelessWidget {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Volume\nLifted',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
+                  Text('Volume\nLifted', style: AppTextStyles.headline3),
                   SizedBox(height: 4),
-                  Text(
-                    'Weight × Reps per week',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
+                  Text('Weight × Reps per week', style: AppTextStyles.caption),
                 ],
               ),
               const Spacer(),
@@ -500,7 +458,9 @@ class _VolumeChartCard extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.only(left: 6),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primary.withValues(alpha: 0.2)
@@ -508,8 +468,8 @@ class _VolumeChartCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         border: isSelected
                             ? Border.all(
-                            color:
-                            AppColors.primary.withValues(alpha: 0.5))
+                                color: AppColors.primary.withValues(alpha: 0.5),
+                              )
                             : null,
                       ),
                       child: Text(
@@ -532,23 +492,23 @@ class _VolumeChartCard extends StatelessWidget {
           const SizedBox(height: 24),
           data.every((v) => v == 0)
               ? const SizedBox(
-            height: 140,
-            child: Center(
-              child: Text(
-                'No workouts logged yet.\nStart a workout to see your volume!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 13,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ),
-          )
+                  height: 140,
+                  child: Center(
+                    child: Text(
+                      'No workouts logged yet.\nStart a workout to see your volume!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                )
               : SizedBox(
-            height: 140,
-            child: _BarChart(data: data, labels: labels),
-          ),
+                  height: 140,
+                  child: _BarChart(data: data, labels: labels),
+                ),
         ],
       ),
     );
@@ -607,7 +567,8 @@ class _BarChart extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: List.generate(data.length, (i) {
-            final showLabel = data.length <= 4 ||
+            final showLabel =
+                data.length <= 4 ||
                 i % (data.length ~/ 4 + 1) == 0 ||
                 i == data.length - 1;
             return Expanded(
@@ -701,7 +662,7 @@ class _ConsistencyCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   ...List.generate(
                     4,
-                        (i) => Container(
+                    (i) => Container(
                       margin: const EdgeInsets.only(left: 3),
                       width: 12,
                       height: 12,
@@ -727,43 +688,48 @@ class _ConsistencyCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: days
-                .map((d) => Expanded(
-              child: Text(
-                d,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ))
-                .toList(),
-          ),
-          const SizedBox(height: 8),
-          ...data.map((week) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              children: week
-                  .map((intensity) => Expanded(
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 2),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _cellColor(intensity),
-                        borderRadius: BorderRadius.circular(5),
+                .map(
+                  (d) => Expanded(
+                    child: Text(
+                      d,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
-              ))
-                  .toList(),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 8),
+          ...data.map(
+            (week) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: week
+                    .map(
+                      (intensity) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _cellColor(intensity),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
