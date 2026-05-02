@@ -23,7 +23,13 @@ class _ProfileScreenState extends State<ProfileScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _personalRecordsFuture = _databaseService.getPersonalRecords(_userId);
+    _loadPersonalRecords(); // ← call method instead of setting future directly
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadPersonalRecords(); // ← reloads every time screen is navigated to
   }
 
   @override
@@ -52,10 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       backgroundColor: AppColors.background,
       appBar: const FormAppBar(showAvatar: false),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await _databaseService.getPersonalRecords(_userId);
-          setState(() {}); // Trigger rebuild with new data
-        },
+        onRefresh: _loadPersonalRecords,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),

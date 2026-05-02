@@ -273,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pushNamed(
                         context,
                         AppRouter.mainShell,
-                        arguments: 2,
+                        arguments: 3,
                       );
                     },
                   ),
