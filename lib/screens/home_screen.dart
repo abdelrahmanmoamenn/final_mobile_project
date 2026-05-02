@@ -115,13 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Week ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
+                          'Wk ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
                           style: const TextStyle(
                             fontFamily: 'Lexend',
                             fontSize: 9,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

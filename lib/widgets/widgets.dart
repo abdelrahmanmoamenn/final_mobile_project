@@ -373,7 +373,7 @@ class CounterInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch, // ← change this
       children: [
         Text(label, style: AppTextStyles.label),
         const SizedBox(height: 8),
@@ -382,25 +382,32 @@ class CounterInput extends StatelessWidget {
             color: AppColors.tertiary,
             borderRadius: BorderRadius.circular(12),
           ),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.remove, color: AppColors.textSecondary),
+                icon: const Icon(Icons.remove, color: AppColors.textSecondary, size: 18),
                 onPressed: onDecrement,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
-              Text(
-                formatter(value),
-                style: const TextStyle(
-                  fontFamily: 'Lexend',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  formatter(value),
+                  style: const TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.add, color: AppColors.textSecondary),
+                icon: const Icon(Icons.add, color: AppColors.textSecondary, size: 18),
                 onPressed: onIncrement,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
             ],
           ),
