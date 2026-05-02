@@ -367,31 +367,6 @@ status TEXT (pending/synced)
 
 ---
 
-## 🔮 Future Improvements
-
-### Feature Enhancements
-- [ ] **Workout Templates** – Save and reuse custom workout configurations
-- [ ] **Social Features** – Share workouts, follow friends, competitive leaderboards
-- [ ] **Advanced Analytics** – ML-based progress predictions and form analysis
-- [ ] **Push Notifications** – Workout reminders and achievement celebrations
-- [ ] **Video Integration** – Exercise form videos and AR-guided form checking
-
-### Technical Improvements
-- [ ] **Unit & Widget Tests** – Comprehensive test coverage (>80%)
-- [ ] **Firebase Firestore Migration** – Move from RTDB to Firestore for scalability
-- [ ] **Hive Local Storage** – Replace SQLite for better performance
-- [ ] **Redux/Riverpod** – Advanced state management for complex scenarios
-- [ ] **CI/CD Pipeline** – GitHub Actions for automated testing and deployment
-- [ ] **Analytics Integration** – Firebase Analytics, Amplitude, or Mixpanel
-
-### Scalability
-- [ ] **Backend API** – Node.js/Express backend for business logic offloading
-- [ ] **GraphQL API** – Query language for efficient data fetching
-- [ ] **Caching Strategy** – Redis caching layer for frequently accessed data
-- [ ] **Database Sharding** – Handle scaling beyond single Firebase instance
-
----
-
 ## 📁 Repository Structure
 
 ```
