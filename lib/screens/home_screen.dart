@@ -14,7 +14,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _databaseService = DatabaseService();
   final _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
 
@@ -27,8 +27,30 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadStats();
     _loadWeekProgress();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadStats();
+    _loadWeekProgress();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadStats();
+      _loadWeekProgress();
+    }
   }
 
   Future<void> _loadStats() async {
@@ -56,237 +78,245 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadAllData() async {
+    await Future.wait([_loadStats(), _loadWeekProgress()]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const FormAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting
-            const SizedBox(height: 8),
-            const Text(
-              'Good morning,',
-              style: TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 16,
-                color: AppColors.textSecondary,
+      body: RefreshIndicator(
+        onRefresh: _loadAllData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Greeting
+              const SizedBox(height: 8),
+              const Text(
+                'Good morning,',
+                style: TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-            Text(
-              '${FirebaseAuth.instance.currentUser?.displayName ?? 'User'} ',
-              style: const TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+              Text(
+                '${FirebaseAuth.instance.currentUser?.displayName ?? 'User'} ',
+                style: const TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Today's summary card
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.bolt,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Today's Summary",
-                        style: AppTextStyles.headline3,
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Wk ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
-                          style: const TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 9,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _StatItem(
-                        label: 'Workouts',
-                        value: '$_workoutsThisWeek',
-                        unit: 'this week',
-                      ),
-                      _Divider(),
-                      _StatItem(
-                        label: 'Calories',
-                        value: _caloriesBurned > 0
-                            ? _caloriesBurned.toString()
-                            : '0',
-                        unit: 'burned',
-                      ),
-                      _Divider(),
-                      _StatItem(
-                        label: 'Streak',
-                        value: '$_streak',
-                        unit: 'days',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Next workout card
-            AppCard(
-              onTap: () {
-                Navigator.pushNamed(context, AppRouter.mainShell, arguments: 1);
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.fitness_center,
-                      color: AppColors.primary,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // Today's summary card
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        const Text('Next Workout', style: AppTextStyles.label),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Push Day',
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                        const Icon(
+                          Icons.bolt,
+                          color: AppColors.primary,
+                          size: 20,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(width: 8),
                         const Text(
-                          '6 exercises • 65 min',
-                          style: AppTextStyles.label,
+                          "Today's Summary",
+                          style: AppTextStyles.headline3,
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Wk ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
+                            style: const TextStyle(
+                              fontFamily: 'Lexend',
+                              fontSize: 9,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_forward_ios,
-                      color: AppColors.white,
-                      size: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _StatItem(
+                          label: 'Workouts',
+                          value: '$_workoutsThisWeek',
+                          unit: 'this week',
+                        ),
+                        _Divider(),
+                        _StatItem(
+                          label: 'Calories',
+                          value: _caloriesBurned > 0
+                              ? _caloriesBurned.toString()
+                              : '0',
+                          unit: 'burned',
+                        ),
+                        _Divider(),
+                        _StatItem(
+                          label: 'Streak',
+                          value: '$_streak',
+                          unit: 'days',
+                        ),
+                       ],
+                     ),
+                   ],
+                 ),
+               ),
+               const SizedBox(height: 16),
 
-            // Weekly progress
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SectionHeader(
-                    title: 'Weekly Progress',
-                    icon: Icons.calendar_today,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                        .asMap()
-                        .entries
-                        .map(
-                          (e) => _DayDot(
-                            day: e.value,
-                            isCompleted: _completedDays.contains(e.key),
-                            isToday: e.key == _todayIndex,
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+               // Next workout card
+               AppCard(
+                 onTap: () {
+                   Navigator.pushNamed(context, AppRouter.mainShell, arguments: 1);
+                 },
+                 child: Row(
+                   children: [
+                     Container(
+                       width: 52,
+                       height: 52,
+                       decoration: BoxDecoration(
+                         color: AppColors.primary.withValues(alpha: 0.15),
+                         borderRadius: BorderRadius.circular(12),
+                       ),
+                       child: const Icon(
+                         Icons.fitness_center,
+                         color: AppColors.primary,
+                         size: 26,
+                       ),
+                     ),
+                     const SizedBox(width: 14),
+                     Expanded(
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           const Text('Next Workout', style: AppTextStyles.label),
+                           const SizedBox(height: 4),
+                           const Text(
+                             'Push Day',
+                             style: TextStyle(
+                               fontFamily: 'Lexend',
+                               fontSize: 18,
+                               fontWeight: FontWeight.w700,
+                               color: AppColors.textPrimary,
+                             ),
+                           ),
+                           const SizedBox(height: 2),
+                           const Text(
+                             '6 exercises • 65 min',
+                             style: AppTextStyles.label,
+                           ),
+                         ],
+                       ),
+                     ),
+                     Container(
+                       padding: const EdgeInsets.all(8),
+                       decoration: const BoxDecoration(
+                         color: AppColors.primary,
+                         shape: BoxShape.circle,
+                       ),
+                       child: const Icon(
+                         Icons.arrow_forward_ios,
+                         color: AppColors.white,
+                         size: 14,
+                       ),
+                     ),
+                   ],
+                 ),
+               ),
+               const SizedBox(height: 16),
 
-            // Quick actions
-            const Text('Quick Actions', style: AppTextStyles.headline3),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickAction(
-                    icon: Icons.add,
-                    label: 'Log\nWorkout',
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRouter.mainShell,
-                        arguments: 1,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _QuickAction(
-                    icon: Icons.emoji_events,
-                    label: 'View\nPRs',
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRouter.mainShell,
-                        arguments: 3,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
+               // Weekly progress
+               AppCard(
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     const SectionHeader(
+                       title: 'Weekly Progress',
+                       icon: Icons.calendar_today,
+                     ),
+                     const SizedBox(height: 20),
+                     Row(
+                       mainAxisAlignment: MainAxisAlignment.spaceAround,
+                       children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                           .asMap()
+                           .entries
+                           .map(
+                             (e) => _DayDot(
+                               day: e.value,
+                               isCompleted: _completedDays.contains(e.key),
+                               isToday: e.key == _todayIndex,
+                             ),
+                           )
+                           .toList(),
+                     ),
+                   ],
+                 ),
+               ),
+               const SizedBox(height: 16),
+
+               // Quick actions
+               const Text('Quick Actions', style: AppTextStyles.headline3),
+               const SizedBox(height: 12),
+               Row(
+                 children: [
+                   Expanded(
+                     child: _QuickAction(
+                       icon: Icons.add,
+                       label: 'Log\nWorkout',
+                       onTap: () {
+                         Navigator.pushNamed(
+                           context,
+                           AppRouter.mainShell,
+                           arguments: 1,
+                         );
+                       },
+                     ),
+                   ),
+                   const SizedBox(width: 12),
+                   Expanded(
+                     child: _QuickAction(
+                       icon: Icons.emoji_events,
+                       label: 'View\nPRs',
+                       onTap: () {
+                         Navigator.pushNamed(
+                           context,
+                           AppRouter.mainShell,
+                           arguments: 3,
+                         );
+                       },
+                     ),
+                   ),
+                 ],
+               ),
+               const SizedBox(height: 24),
+             ],
+           ),
+         ),
+       ),
+     );
+   }
 }
 
 class _StatItem extends StatelessWidget {

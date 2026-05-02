@@ -21,25 +21,7 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.background,
-      leading: showAvatar
-          ? Padding(
-              padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-              child: GestureDetector(
-                onTap: onAvatarTap,
-                child: Container(
-                  decoration: BoxDecoration(shape: BoxShape.circle),
-                  child: const CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    child: Icon(
-                      Icons.language,
-                      color: AppColors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          : null,
+      leading: null,
       title: const Text(
         'FORM',
         style: TextStyle(
@@ -50,15 +32,7 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
           letterSpacing: 2,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.textSecondary,
-          ),
-          onPressed: onNotificationTap,
-        ),
-      ],
+      actions: const [],
     );
   }
 
