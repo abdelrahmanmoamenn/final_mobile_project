@@ -55,11 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _completedDays = completed);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CoachAIAppBar(),
+      appBar: const FormAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -114,13 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Week ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
+                          'Wk ${DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays ~/ 7 + 1}',
                           style: const TextStyle(
                             fontFamily: 'Lexend',
-                            fontSize: 11,
+                            fontSize: 9,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -137,11 +139,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       _Divider(),
                       _StatItem(
                         label: 'Calories',
-                        value: _caloriesBurned > 0 ? _caloriesBurned.toString() : '0',
+                        value: _caloriesBurned > 0
+                            ? _caloriesBurned.toString()
+                            : '0',
                         unit: 'burned',
                       ),
                       _Divider(),
-                      _StatItem(label: 'Streak', value: '$_streak', unit: 'days'),
+                      _StatItem(
+                        label: 'Streak',
+                        value: '$_streak',
+                        unit: 'days',
+                      ),
                     ],
                   ),
                 ],
@@ -249,7 +257,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.add,
                     label: 'Log\nWorkout',
                     onTap: () {
-                      Navigator.pushNamed(context, AppRouter.mainShell, arguments: 1);
+                      Navigator.pushNamed(
+                        context,
+                        AppRouter.mainShell,
+                        arguments: 1,
+                      );
                     },
                   ),
                 ),
@@ -259,7 +271,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.emoji_events,
                     label: 'View\nPRs',
                     onTap: () {
-                      Navigator.pushNamed(context, AppRouter.mainShell, arguments: 2);
+                      Navigator.pushNamed(
+                        context,
+                        AppRouter.mainShell,
+                        arguments: 3,
+                      );
                     },
                   ),
                 ),

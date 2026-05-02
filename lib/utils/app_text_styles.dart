@@ -48,6 +48,14 @@ class AppTextStyles {
     letterSpacing: 0.5,
   );
 
+  static const TextStyle labelPrimary = TextStyle(
+    fontFamily: 'Lexend',
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
+    color: AppColors.primary,
+    letterSpacing: 1.2,
+  );
+
   static const TextStyle caption = TextStyle(
     fontFamily: 'Lexend',
     fontSize: 11,
@@ -63,4 +71,3 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 }
-

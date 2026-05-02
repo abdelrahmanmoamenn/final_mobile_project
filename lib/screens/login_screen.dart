@@ -167,14 +167,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF2A3247),
                         borderRadius: BorderRadius.circular(26),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
                       ),
-                      child: const Icon(Icons.bolt_rounded, color: AppColors.brandBlue, size: 44),
+                      child: const Icon(
+                        Icons.bolt_rounded,
+                        color: AppColors.brandBlue,
+                        size: 44,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     const Text(
                       'Sign In',
                       style: TextStyle(
+                        fontFamily: 'Lexend',
                         color: AppColors.textPrimary,
                         fontSize: 52,
                         fontWeight: FontWeight.w900,
@@ -182,8 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Access your performance data.',
+                      'Access your FORM dashboard.',
                       style: TextStyle(
+                        fontFamily: 'Lexend',
                         color: AppColors.textSecondary,
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -196,7 +204,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.secondary.withValues(alpha: 0.58),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -206,10 +216,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: AppColors.textMuted,
+                            ),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) return 'Email is required';
-                              if (!value.contains('@')) return 'Please enter a valid email';
+                              if (value == null || value.trim().isEmpty)
+                                return 'Email is required';
+                              if (!value.contains('@'))
+                                return 'Please enter a valid email';
                               return null;
                             },
                           ),
@@ -246,17 +261,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _signIn(),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'Password is required';
-                              if (value.length < 6) return 'Password must be at least 6 characters';
+                              if (value == null || value.isEmpty)
+                                return 'Password is required';
+                              if (value.length < 6)
+                                return 'Password must be at least 6 characters';
                               return null;
                             },
-                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                            ),
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              hintStyle: const TextStyle(color: AppColors.textMuted),
-                              prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                              hintStyle: const TextStyle(
+                                color: AppColors.textMuted,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: AppColors.textMuted,
+                              ),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                                 icon: Icon(
                                   _obscurePassword
                                       ? Icons.visibility_off_outlined
@@ -266,18 +293,30 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               filled: true,
                               fillColor: AppColors.surface,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 18,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                                borderSide: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.09)),
+                                borderSide: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.09),
+                                ),
                               ),
                               focusedBorder: const OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(14)),
-                                borderSide: BorderSide(color: AppColors.brandBlue, width: 1.25),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(14),
+                                ),
+                                borderSide: BorderSide(
+                                  color: AppColors.brandBlue,
+                                  width: 1.25,
+                                ),
                               ),
                             ),
                           ),
@@ -296,14 +335,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'New to IronCore? ',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                          'New to FORM? ',
+                          style: TextStyle(
+                            fontFamily: 'Lexend',
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, AppRouter.signUp),
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRouter.signUp),
                           child: const Text(
                             'Create Account',
                             style: TextStyle(
+                              fontFamily: 'Lexend',
                               color: AppColors.brandBlue,
                               fontWeight: FontWeight.w700,
                               fontSize: 16,

@@ -12,6 +12,7 @@ import 'screens/workout_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/stats_screen.dart';
 import 'services/connectivity_service.dart';
+import 'services/database_service.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 
@@ -47,7 +48,7 @@ class IronCoreApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Iron Core',
+      title: 'FORM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       onGenerateRoute: AppRouter.onGenerateRoute,
@@ -71,6 +72,8 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    // Sync any pending operations from previous sessions
+    DatabaseService().syncPendingOperations();
   }
 
   final List<Widget> _screens = const [
@@ -84,7 +87,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: _CoachAIBottomNav(
+      bottomNavigationBar: _FormBottomNav(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
       ),
@@ -92,11 +95,11 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-class _CoachAIBottomNav extends StatelessWidget {
+class _FormBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const _CoachAIBottomNav({required this.currentIndex, required this.onTap});
+  const _FormBottomNav({required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

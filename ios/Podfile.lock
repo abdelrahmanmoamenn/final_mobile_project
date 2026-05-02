@@ -1,4 +1,6 @@
 PODS:
+  - connectivity_plus (0.0.1):
+    - Flutter
   - Firebase/Auth (11.15.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 11.15.0)
@@ -80,6 +82,7 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_database (from `.symlinks/plugins/firebase_database/ios`)
@@ -104,6 +107,8 @@ SPEC REPOS:
     - RecaptchaInterop
 
 EXTERNAL SOURCES:
+  connectivity_plus:
+    :path: ".symlinks/plugins/connectivity_plus/ios"
   firebase_auth:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
@@ -118,6 +123,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
 
 SPEC CHECKSUMS:
+  connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
   firebase_auth: 50af8366c87bb88c80ebeae62eb60189c7246b9b
   firebase_core: 995454a784ff288be5689b796deb9e9fa3601818
