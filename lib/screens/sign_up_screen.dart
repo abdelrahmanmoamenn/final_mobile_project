@@ -49,10 +49,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await credential.user?.updateDisplayName(_nameController.text.trim());
       await credential.user?.reload();
 
+      // Sign out after creation so they have to login manually as requested
+      await FirebaseAuth.instance.signOut();
+
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Account created! Please sign in with your credentials.',
+          ),
+          backgroundColor: AppColors.brandBlue,
+        ),
+      );
+
       Navigator.of(
         context,
-      ).pushNamedAndRemoveUntil(AppRouter.mainShell, (_) => false);
+      ).pushNamedAndRemoveUntil(AppRouter.authGate, (_) => false);
     } on FirebaseAuthException catch (e) {
       _showError(_mapAuthError(e));
     } catch (_) {
@@ -159,10 +172,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           color: AppColors.textMuted,
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return 'Email is required';
-                          if (!value.contains('@'))
+                          }
+                          if (!value.contains('@')) {
                             return 'Please enter a valid email';
+                          }
                           return null;
                         },
                       ),
@@ -189,10 +204,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Password is required';
-                          if (value.length < 6)
+                          }
+                          if (value.length < 6) {
                             return 'Password must be at least 6 characters';
+                          }
                           return null;
                         },
                       ),
