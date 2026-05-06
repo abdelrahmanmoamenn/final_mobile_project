@@ -86,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: const CircleAvatar(
                         radius: 50,
                         backgroundImage: NetworkImage(
-                          'https://i.pravatar.cc/150?u=alex',
+                          'https://cdn-img.staticzz.com/img/planteis/new/16/13/10871613_cristiano_ronaldo_20250718090126.jpg',
                         ),
                         backgroundColor: AppColors.tertiary,
                       ),
